@@ -1,0 +1,89 @@
+/* ============================================================================
+   FILE: app/globals.css
+   Tailwind v4 + Cyber Community Pakistan tokens.
+   ============================================================================ */
+
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f3f5f4;
+  --color-ink: #071a2b;
+  --color-ink-2: #0c2740;
+  --color-ink-deep: #04111d; /* footer */
+  --color-emerald: #14b87a;
+  --color-emerald-soft: #5fe0aa;
+  --color-rose: #ff7aa8; /* SecureHer accent */
+
+  --font-sans: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo Variable", "Arial Black", Impact, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  /* Native page scrollbar hidden — see components/layout/ScrollIndicator.tsx */
+  html {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  html {
+    background: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    background: var(--color-emerald);
+    color: var(--color-ink);
+  }
+}
+
+/* Hide the native scrollbar but keep scrolling (wheel, touch, keyboard) */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Hidden until the hero intro (GSAP) reveals them — avoids a flash on load */
+[data-fx] {
+  visibility: hidden;
+}
+
+/* Program cards: equaliser bars + ripple rings */
+@keyframes eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* SecureHer floating chips */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Team card scan line */
+@keyframes team-scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(320%); }
+}
+
+/* Scroll cue line in the hero */
+@keyframes scrollcue {
+  0% { transform: translateY(-100%); }
+  60%, 100% { transform: translateY(200%); }
+}
