@@ -1,36 +1,72 @@
 // =============================================================================
 // FILE: lib/db.ts
-// Prisma client (server only). Prisma 7 talks to Postgres through the `pg`
-// driver adapter using the pooled Supabase URL (DATABASE_URL).
-// One shared client in dev so hot reloads don't open new pools.
+// MongoDB connection using Mongoose (server only).
+// One shared connection in dev so hot reloads don't open new connections.
 // =============================================================================
 
 import 'server-only';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@/lib/generated/prisma/client';
+import mongoose from 'mongoose';
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const MONGODB_URI = process.env.MONGODB_URI || '';
 
-function createClient() {
-  // Use connection pooling for better performance
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 10, // Maximum number of clients in the pool
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  });
-  
-  const adapter = new PrismaPg(pool);
-  return new PrismaClient({ 
-    adapter,
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+/** True when a database is configured. Without it the site uses built-in defaults. */
+export const hasDatabase = Boolean(MONGODB_URI);
+
+if (!MONGODB_URI && process.env.NODE_ENV === 'production') {
+  console.warn('[db] No MONGODB_URI found. Site will use built-in defaults.');
+}
+
+const cached = (globalThis.__mongooseCache ??= { conn: null, promise: null });
+
+async function connectDB() {
+  if (!MONGODB_URI) {
+    throw new Error('MONGODB_URI is not defined');
+  }
+
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
+      if (process.env.NODE_ENV !== 'production') console.log('[db] MongoDB connected');
+      return m;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
+}
+
+export const db = {
+  connect: connectDB,
+  mongoose,
+};
+
+// Auto-connect in production
+if (process.env.NODE_ENV === 'production' && hasDatabase) {
+  connectDB().catch((err) => {
+    console.error('[db] Connection error:', err);
   });
 }
 
-/** True when a database is configured. Without it the site uses built-in defaults. */
-export const hasDatabase = Boolean(process.env.DATABASE_URL);
-
-export const db = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
+// Type augmentation for global
+declare global {
+  var __mongooseCache: {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+  } | undefined;
+}

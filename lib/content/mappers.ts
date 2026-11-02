@@ -6,15 +6,15 @@
 // =============================================================================
 
 import type {
-  Event as DbEvent,
-  Faq as DbFaq,
-  MenuItem as DbMenuItem,
-  Program as DbProgram,
-  SiteSettings as DbSettings,
-  TeamMember as DbTeamMember,
-  Testimonial as DbTestimonial,
-} from '../generated/prisma/client';
-import type { EventType, ProgramArt, ProgramStatus, TeamGroup } from '../generated/prisma/enums';
+  IEvent,
+  IFaq,
+  IMenuItem,
+  IProgram,
+  ISiteSettings,
+  ITeamMember,
+  ITestimonial,
+} from '../models';
+import { EventType, ProgramArt, ProgramStatus, TeamGroup } from '../models';
 import type {
   EventItem,
   EventTypeLabel,
@@ -32,9 +32,9 @@ import type {
 // ---------- enum label maps -----------------------------------------------------
 
 export const programStatusLabel: Record<ProgramStatus, ProgramStatusLabel> = {
-  OPEN: 'Open',
-  COMING_SOON: 'Coming soon',
-  ALWAYS_ON: 'Always on',
+  [ProgramStatus.OPEN]: 'Open',
+  [ProgramStatus.COMING_SOON]: 'Coming soon',
+  [ProgramStatus.ALWAYS_ON]: 'Always on',
 };
 export const programStatusValue = Object.fromEntries(
   Object.entries(programStatusLabel).map(([k, v]) => [v, k]),
@@ -53,7 +53,7 @@ const opt = (v: string | null | undefined) => (v ? v : undefined);
 
 // ---------- settings ----------------------------------------------------------------
 
-export function fromSettingsLogo(s: DbSettings): SiteLogo | null {
+export function fromSettingsLogo(s: ISiteSettings): SiteLogo | null {
   if (!s.logoUrl) return null;
   return {
     src: s.logoUrl,
@@ -67,13 +67,13 @@ export function fromSettingsLogo(s: DbSettings): SiteLogo | null {
 
 // ---------- menu (flat rows → tree) ------------------------------------------------
 
-export function fromMenuRows(rows: DbMenuItem[]): MenuItem[] {
+export function fromMenuRows(rows: any[]): MenuItem[] {
   const visible = rows.filter((r) => r.visible).sort((a, b) => a.order - b.order);
   return visible
     .filter((r) => !r.parentId)
     .map((top) => {
       const children = visible
-        .filter((c) => c.parentId === top.id)
+        .filter((c) => c.parentId?.toString() === top._id.toString())
         .map((c) => ({ label: c.label, href: c.href ?? '#', description: opt(c.description), badge: opt(c.badge) }));
       return {
         label: top.label,
@@ -86,11 +86,11 @@ export function fromMenuRows(rows: DbMenuItem[]): MenuItem[] {
 
 // ---------- home ------------------------------------------------------------------------
 
-export const fromProgram = (p: DbProgram): Program => ({
-  id: p.id,
+export const fromProgram = (p: any): Program => ({
+  id: p._id.toString(),
   title: p.title,
   level: p.level,
-  status: programStatusLabel[p.status],
+  status: programStatusLabel[p.status as ProgramStatus],
   description: p.description,
   meta: p.meta,
   cta: { label: p.ctaLabel, href: p.ctaHref },
@@ -114,15 +114,15 @@ export const toProgram = (p: Program, order: number) => ({
 /** DB `date` columns come back as UTC midnight → keep the calendar day. */
 export const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
-export const fromEvent = (e: DbEvent): EventItem => ({
-  id: e.id,
+export const fromEvent = (e: any): EventItem => ({
+  id: e._id.toString(),
   date: isoDay(e.date),
   title: e.title,
   type: eventTypeLabel(e.type),
   series: opt(e.series),
   format: e.format,
   description: e.description,
-  href: e.href,
+  href: e.slug ? `/events/${e.slug}` : e.href,
 });
 
 export const toEvent = (e: EventItem) => ({
@@ -135,8 +135,8 @@ export const toEvent = (e: EventItem) => ({
   href: e.href,
 });
 
-export const fromTestimonial = (t: DbTestimonial): Testimonial => ({
-  id: t.id,
+export const fromTestimonial = (t: any): Testimonial => ({
+  id: t._id.toString(),
   quote: t.quote,
   name: t.name,
   role: t.role,
@@ -153,13 +153,13 @@ export const toTestimonial = (t: Testimonial, order: number) => ({
   order,
 });
 
-export const fromFaq = (f: DbFaq): FaqItem => ({ id: f.id, q: f.question, a: f.answer });
+export const fromFaq = (f: any): FaqItem => ({ id: f._id.toString(), q: f.question, a: f.answer });
 export const toFaq = (f: FaqItem, order: number) => ({ question: f.q, answer: f.a, order });
 
 // ---------- team ---------------------------------------------------------------------------
 
-export const fromTeamMember = (m: DbTeamMember): TeamMember => ({
-  id: m.id,
+export const fromTeamMember = (m: any): TeamMember => ({
+  id: m._id.toString(),
   name: m.name,
   role: m.role,
   group: teamGroupId(m.group),

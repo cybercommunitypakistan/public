@@ -1,7 +1,7 @@
 // =============================================================================
 // FILE: app/api/revalidate/route.ts
 // Refresh cached content after editing the database outside the admin panel
-// (Supabase table editor, scripts, or a Supabase Database Webhook).
+// (MongoDB Atlas UI, scripts, or database webhooks).
 //
 //   POST /api/revalidate            header  x-revalidate-secret: <REVALIDATE_SECRET>
 //   body (optional): { "tags": ["programs", "events"] }   → default: everything

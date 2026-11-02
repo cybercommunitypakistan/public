@@ -12,6 +12,10 @@ export const TAGS = {
   testimonials: 'testimonials',
   faqs: 'faqs',
   team: 'team',
+  pages: 'pages',
+  posts: 'posts',
+  forms: 'forms',
+  theme: 'theme',
 } as const;
 
 export type ContentTag = (typeof TAGS)[keyof typeof TAGS];

@@ -4,7 +4,9 @@
 // =============================================================================
 
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import SiteHeader from '@/components/layout/SiteHeader';
+import { isSystemPageEnabled } from '@/lib/cms/queries';
 import AboutHero from '@/components/about/AboutHero';
 import TeamSection from '@/components/team/TeamSection';
 import IntroSection from '@/components/sections/IntroSection';
@@ -22,6 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
+  if (!(await isSystemPageEnabled('about'))) notFound();
   const about = await getAboutData();
 
   return (
